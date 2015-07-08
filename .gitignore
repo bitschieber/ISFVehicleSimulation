@@ -1,9 +1,12 @@
 #################
-## Eclipse
+## Unity 3D
 #################
-
 Library/
 
+
+#################
+## Eclipse
+#################
 *.pydevproject
 .project
 .metadata
