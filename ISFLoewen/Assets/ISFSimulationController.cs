@@ -197,8 +197,15 @@ public class ISFSimulationController : MonoBehaviour {
 			drawCircle (_steeringCutPointPos, mag);
 		}
 
+		
+		
+		if (newScreen == true) {
+			_cameraImage = _cameraStream.getImage();
+		}		
+		newScreen = false;
+
 		/*
-		 * Only wen Step from SimulationController
+		 * Only when Step from SimulationController
 		 * */
 
 		if (moveCar == true) {
@@ -233,12 +240,6 @@ public class ISFSimulationController : MonoBehaviour {
 
 			moveCar = false;
 		}
-
-		if (newScreen == true) {
-			_cameraImage = _cameraStream.getImage();
-		}
-		
-		newScreen = false;
 	}
 
 
