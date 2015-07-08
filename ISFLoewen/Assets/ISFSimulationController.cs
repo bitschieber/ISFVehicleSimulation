@@ -16,7 +16,7 @@ public struct DATA_SET_TO_SIMULATION_t{
 	public Int32 steering_angle; //Grad
 	public Int32 speed_mms; //mm/s
 	public UInt32 timediff; //mm/s
-	public UInt32 gpio_state = 0;
+	public UInt32 gpio_state;
 	UInt32 end_sequence;
 };
 
