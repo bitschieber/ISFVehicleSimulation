@@ -127,7 +127,7 @@ public class ISFSimulationController : MonoBehaviour {
 		
 		btnReset.onClick.AddListener(() => {
 			//handle click here
-			_carRoot.transform.position = new Vector3(0,0,0);
+			_carRoot.transform.position = new Vector3(0,_carRoot.transform.position.y,0);
 			_carRoot.transform.rotation = new Quaternion(0,0,0,0);
 		});
 
@@ -190,12 +190,14 @@ public class ISFSimulationController : MonoBehaviour {
 			_steeringCutPoint.transform.position = _steeringCutPointPos;
 			//_carKreisbahnPoint.transform.position = _wheelBackLeft.transform.position;
 		//}
-		
+
+		/*
 		if (wheelAngle == 0) { //StraightForward
 			drawLine(_carRoot.transform.position,100);
 		} else {
 			drawCircle (_steeringCutPointPos, mag);
 		}
+		*/
 
 		
 		
