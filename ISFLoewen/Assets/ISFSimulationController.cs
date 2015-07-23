@@ -8,6 +8,8 @@ using System.Runtime.InteropServices;
 using UnityEngine.UI;
 
 public enum SIMULATION_COMMAND{SIMUCOM_UNKNOWN, SIMUCOM_SEND_IMAGE,SIMUCOM_UPDATE_DATA};
+public enum CAMERAS{CAMERA_FRONT, CAMERA_TOP, CAMERA_BACK};
+public enum GPIO_PINS{LED_INDICATOR_LFET, LED_INDICATOR_RIGHT, LED_BACKWARD, LED_DRIVING_LIGHT, LED_BRAKE_LIGHT};
 
 
 public struct DATA_SET_TO_SIMULATION_t{
@@ -20,7 +22,8 @@ public struct DATA_SET_TO_SIMULATION_t{
 	UInt32 end_sequence;
 };
 
-public enum DATA_HEADER_TYPE{IMAGE_JPEG, SIMULATION_OUTPUT,};
+public enum DATA_HEADER_TYPE{IMAGE_JPEG, SIMULATION_OUTPUT};
+
 public struct DATA_HEADER_SET{
 	UInt32 start_sequence;
 	public DATA_HEADER_TYPE type;
@@ -33,8 +36,12 @@ public class ISFSimulationController : MonoBehaviour {
 	public InputField ipAddressField;
 	public Button btnStartServer;
 	public Button btnReset;
+	public Button btnChangeCamera;
 
-
+	private CAMERAS _currentCamera = CAMERAS.CAMERA_BACK;
+	private Camera _cameraBack;
+	private Camera _cameraFront;
+	private Camera _cameraTop;
 
 	private Server _server = null;
 	private GameObject _goCamera;
@@ -49,6 +56,9 @@ public class ISFSimulationController : MonoBehaviour {
 	private float _moveCarMmDistance = 0;
 	private float _moveCarAngle = 0;
 
+	//Tires
+	private GameObject _tireFrontLeft;
+	private GameObject _tireFrontRight;
 	//Axis	
 	private GameObject _wheelFrontLeft;
 	private GameObject _wheelFrontRight;
@@ -60,6 +70,13 @@ public class ISFSimulationController : MonoBehaviour {
 	private GameObject _golf;
 	private GameObject _carRoot;
 	private GameObject _posStraighForeward;
+	//Lights
+	private uint _moveCarLights;
+	private GameObject _lightIndicatorLeft;
+	private GameObject _lightIndicatorRight;
+	private GameObject _lightDrive;
+	private GameObject _lightBreak;
+	private GameObject _lightBackward;
 
 	//private int _moveCarMsTime = 0;
 
@@ -73,21 +90,37 @@ public class ISFSimulationController : MonoBehaviour {
 	
 	LineRenderer lineRenderer;
 
+	
+	// Update is called once per frame
+	private Vector3 end;
+	private Vector3 end2;
+	private Vector3 _steeringCutPointPos = new Vector3();
+	private TimeSpan elapsedSpan;
+	private bool left = false;
+	private bool firstTurn =true;
+	//private Quaternion _wheelRotation = new Quaternion(;
+	private GameObject currentRotationWheel;
+	private float _cutPointLineDirection = -100.0f;
+
 	// Use this for initialization
 	void Start () {
-		//GameObject go = GameObject.Find ("Canvas");
-		//InputField input = (InputField)GameObject.Find("InputFieldIPAdress");
-		//InputField input = go.GetComponent<InputField>();
-		//Button button = go.GetComponent<Button>();
 
 
-		
-		_goCamera = GameObject.Find("MainCamera");
+		_cameraBack = GameObject.Find ("CameraBack").GetComponent<Camera> ();
+		_cameraFront = GameObject.Find ("CameraFront").GetComponent<Camera> ();
+		_cameraTop = GameObject.Find ("CameraTop").GetComponent<Camera> ();
+
+		_goCamera = GameObject.Find("Camera01");
 		_cameraStream = (CameraStream) _goCamera.GetComponent(typeof(CameraStream));
 
 		_tempCar = new GameObject ();
 		_car = GameObject.Find("Car");
-
+		
+		//Tires
+		_tireFrontLeft = GameObject.Find ("TireFrontLeft");
+		_tireFrontRight = GameObject.Find ("TireFrontRight");
+		
+		//Axis
 		_wheelFrontLeft = GameObject.Find ("WheelFrontLeft");
 		_wheelFrontRight = GameObject.Find ("WheelFrontRight");
 		_wheelBackLeft = GameObject.Find ("WheelBackLeft");
@@ -99,14 +132,19 @@ public class ISFSimulationController : MonoBehaviour {
 		_golf = GameObject.Find ("Golf");
 		_posStraighForeward = GameObject.Find ("PosStraighForeward");
 
+		//Lights
+		_moveCarLights = 0;
+		_lightIndicatorLeft  = GameObject.Find ("LightIndicatorLeft"); _lightIndicatorLeft.SetActive (false);
+		_lightIndicatorRight = GameObject.Find ("LightIndicatorRight"); _lightIndicatorRight.SetActive (false);
+		_lightDrive = GameObject.Find ("LightDrive"); _lightDrive.SetActive (false);
+		_lightBreak = GameObject.Find ("LightBreak");_lightBreak.SetActive (false);
+		_lightBackward = GameObject.Find ("LightBackward");_lightBackward.SetActive (false);
 		
-		//_wheelFrontLeft.transform.Rotate(new Vector3(0,1,0),-2);
-
 		lineRenderer = gameObject.AddComponent<LineRenderer>();
 		lineRenderer.SetColors(Color.green, Color.blue);
 		lineRenderer.SetWidth(0.2F, 0.2F);
 		lineRenderer.transform.Rotate (new Vector3 (90, 0, 0));
-
+		
 		btnStartServer.GetComponentInChildren<Text>().text = "Start Server";
 
 		btnStartServer.onClick.AddListener(() => {
@@ -131,24 +169,40 @@ public class ISFSimulationController : MonoBehaviour {
 			_carRoot.transform.rotation = new Quaternion(0,0,0,0);
 		});
 
-	}
-	
-	// Update is called once per frame
-	private Vector3 end;
-	private Vector3 end2;
-	private Vector3 _steeringCutPointPos = new Vector3();
-	private TimeSpan elapsedSpan;
-	private bool left = false;
-	private bool firstTurn =true;
-	//private Quaternion _wheelRotation = new Quaternion(;
-	private GameObject currentRotationWheel;
-	private float _cutPointLineDirection = -100.0f;
-	void Update () {
 
+		_cameraTop.enabled = false;
+		_cameraFront.enabled = false;
+		_cameraBack.enabled = false;
+
+
+		btnChangeCamera.onClick.AddListener(() => {
+			//handle click here
+			if(_currentCamera == CAMERAS.CAMERA_BACK){
+				_cameraBack.enabled = false;
+				_cameraFront.enabled = true;
+				_currentCamera = CAMERAS.CAMERA_FRONT;
+			}
+			else if(_currentCamera == CAMERAS.CAMERA_FRONT){
+				_cameraFront.enabled = false;
+				_cameraTop.enabled = true;
+				_currentCamera = CAMERAS.CAMERA_TOP;
+			}
+			else if(_currentCamera == CAMERAS.CAMERA_TOP){
+				_cameraTop.enabled = false;
+				_cameraBack.enabled = true;
+				_currentCamera = CAMERAS.CAMERA_BACK;
+			}
+		});
+	
+
+
+	}
+
+
+	void Update () {
 
 		_wheelFrontRight.transform.rotation = _wheelFrontLeft.transform.rotation;
 		float wheelAngle = 0;
-		//if (_wheelFrontLeft != null) {
 		wheelAngle = _wheelFrontLeft.transform.localEulerAngles.y;
 		if(Math.Abs(wheelAngle)<0.05)
 			wheelAngle = 0;
@@ -172,34 +226,25 @@ public class ISFSimulationController : MonoBehaviour {
 		
 		_cubeAxisFront.transform.Translate (_cutPointLineDirection, 0.0f, 0.0f);
 		_cubeAxisBack.transform.Translate (_cutPointLineDirection, 0.0f, 0.0f);
-		
 
-			
-			end = _cubeAxisFront.transform.position;
+		end = _cubeAxisFront.transform.position;
 		Debug.DrawLine (currentRotationWheel.transform.position, end, Color.green);
 			
-			end = _cubeAxisBack.transform.position;
-			Debug.DrawLine (_wheelBackLeft.transform.position, end, Color.yellow);
+		end = _cubeAxisBack.transform.position;
+		Debug.DrawLine (_wheelBackLeft.transform.position, end, Color.yellow);
 		if(ClosestPointsOnTwoLines(out _steeringCutPointPos, out end2 ,currentRotationWheel.transform.position,currentRotationWheel.transform.position-_cubeAxisFront.transform.position,_wheelBackLeft.transform.position,_wheelBackLeft.transform.position-_cubeAxisBack.transform.position) == true)
-			{
-				_steeringCutPoint.transform.position = _steeringCutPointPos;
-			}
-			else{
-				_steeringCutPointPos = new Vector3(0,0,0);
-			}
+		{
 			_steeringCutPoint.transform.position = _steeringCutPointPos;
-			//_carKreisbahnPoint.transform.position = _wheelBackLeft.transform.position;
-		//}
-
-		/*
-		if (wheelAngle == 0) { //StraightForward
-			drawLine(_carRoot.transform.position,100);
-		} else {
-			drawCircle (_steeringCutPointPos, mag);
 		}
-		*/
+		else{
+			_steeringCutPointPos = new Vector3(0,0,0);
+		}
+		_steeringCutPoint.transform.position = _steeringCutPointPos;
 
-		
+		_tireFrontLeft.transform.Rotate (new Vector3(0,1,0),-_tireFrontLeft.transform.localEulerAngles.y) ;
+		_tireFrontLeft.transform.Rotate (new Vector3(0,1,0),_wheelFrontLeft.transform.localEulerAngles.y) ;
+		_tireFrontRight.transform.Rotate (new Vector3(0,1,0),-_tireFrontRight.transform.localEulerAngles.y) ;
+		_tireFrontRight.transform.Rotate (new Vector3(0,1,0),_wheelFrontRight.transform.localEulerAngles.y) ;
 		
 		if (newScreen == true) {
 			_cameraImage = _cameraStream.getImage();
@@ -216,16 +261,14 @@ public class ISFSimulationController : MonoBehaviour {
 			if(oldAngle >=180){
 				oldAngle = oldAngle - 360;
 			}			
+
+			
+			setCarLights(_moveCarLights);
 			
 			_wheelFrontLeft.transform.Rotate(new Vector3(0,1,0), (oldAngle * (-1) ));
 			_wheelFrontLeft.transform.Rotate(new Vector3(0,1,0), _moveCarAngle);
 			_wheelFrontRight.transform.Rotate(new Vector3(0,1,0), (oldAngle * (-1) ));
 			_wheelFrontRight.transform.Rotate(new Vector3(0,1,0), _moveCarAngle);
-
-
-
-
-
 
 			if (wheelAngle == 0) { //StraightForward
 				_carRoot.transform.Translate(0,0,_moveCarMmDistance);
@@ -290,6 +333,7 @@ public class ISFSimulationController : MonoBehaviour {
 	void dataFromServer(byte[] data, int len)
 	{
 		DATA_SET_TO_SIMULATION_t _dataFromsimulationController = ByteArrayToNewStuff (data);
+
 		/*
 		System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding ();
 		string message = enc.GetString (data,0,len);
@@ -328,7 +372,7 @@ public class ISFSimulationController : MonoBehaviour {
 		else if (_dataFromsimulationController.command == SIMULATION_COMMAND.SIMUCOM_UPDATE_DATA) {
 
 			moveCarFunc(_dataFromsimulationController.speed_mms, _dataFromsimulationController.steering_angle, _dataFromsimulationController.timediff);
-
+			_moveCarLights = _dataFromsimulationController.gpio_state;
 			newScreen = true;
 			while(newScreen==true){
 			}
@@ -356,6 +400,33 @@ public class ISFSimulationController : MonoBehaviour {
 				
 			}
 		}
+	}
+
+	private void setCarLights(uint ledStates){
+		if( (ledStates & (1 << (int)GPIO_PINS.LED_INDICATOR_LFET)) >0)
+			_lightIndicatorLeft.SetActive (true);
+		else
+			_lightIndicatorLeft.SetActive (false);
+
+		if( (ledStates & (1 << (int)GPIO_PINS.LED_INDICATOR_RIGHT)) >0)
+			_lightIndicatorRight.SetActive (true);
+		else
+			_lightIndicatorRight.SetActive (false);
+
+		if((ledStates & (1 << (int)GPIO_PINS.LED_DRIVING_LIGHT))>0)
+			_lightDrive.SetActive (true);
+		else
+			_lightDrive.SetActive (false);
+
+		if((ledStates & (1 << (int)GPIO_PINS.LED_BRAKE_LIGHT)) >0)
+			_lightBreak.SetActive (true);
+		else
+			_lightBreak.SetActive (false);
+
+		if((ledStates & (1 << (int)GPIO_PINS.LED_BACKWARD)) >0)
+			_lightBackward.SetActive (true);
+		else
+			_lightBackward.SetActive (false);
 	}
 
 	private void moveCarFunc(int speed, int steeringAngle, uint timediff)
