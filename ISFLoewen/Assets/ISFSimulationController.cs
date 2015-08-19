@@ -8,7 +8,8 @@ using System.Runtime.InteropServices;
 using UnityEngine.UI;
 
 public enum SIMULATION_COMMAND{SIMUCOM_UNKNOWN, SIMUCOM_SEND_IMAGE,SIMUCOM_UPDATE_DATA};
-public enum CAMERAS{CAMERA_FRONT, CAMERA_TOP, CAMERA_BACK};
+public enum CAMERAS{CAMERA_FRONT, CAMERA_TOP, CAMERA_BACK, CAMERA_VIEW1};
+public enum COURSES{COURSE_LABOR, COURSE_CUP2014, COURSE_CUP2014_PARKING01, COURSE_CUP2014_OBSTACLES01, CORUSE_STRAIGHT_50_METRES};
 public enum GPIO_PINS{LED_INDICATOR_LFET, LED_INDICATOR_RIGHT, LED_BACKWARD, LED_DRIVING_LIGHT, LED_BRAKE_LIGHT};
 
 
@@ -37,11 +38,20 @@ public class ISFSimulationController : MonoBehaviour {
 	public Button btnStartServer;
 	public Button btnReset;
 	public Button btnChangeCamera;
+	public Button btnChangeCourse;
 
 	private CAMERAS _currentCamera = CAMERAS.CAMERA_BACK;
 	private Camera _cameraBack;
 	private Camera _cameraFront;
 	private Camera _cameraTop;
+	private Camera _cameraView01;
+
+	private COURSES _currentCourse = COURSES.COURSE_LABOR;
+	private GameObject _courseLabor;
+	private GameObject _courseCup2014;
+	private GameObject _courseCup2014Parking01;
+	private GameObject _courseCup2014Obstacles01;
+	private GameObject _courseStraight50Metres;
 
 	private Server _server = null;
 	private GameObject _goCamera;
@@ -105,13 +115,26 @@ public class ISFSimulationController : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-
+		//Die Kameras im System finden und den Objekten zuweisen
 		_cameraBack = GameObject.Find ("CameraBack").GetComponent<Camera> ();
 		_cameraFront = GameObject.Find ("CameraFront").GetComponent<Camera> ();
 		_cameraTop = GameObject.Find ("CameraTop").GetComponent<Camera> ();
-
+		_cameraView01 = GameObject.Find ("Camera01").GetComponent<Camera> ();
 		_goCamera = GameObject.Find("Camera01");
 		_cameraStream = (CameraStream) _goCamera.GetComponent(typeof(CameraStream));
+
+		//Die Strecken im System finden und den Objekten zuweisen
+		_courseLabor = GameObject.Find ("CourseLabor");
+		_courseCup2014 = GameObject.Find ("CourseCup2014");
+		_courseCup2014Parking01 = GameObject.Find ("CourseCup2014Parking01");
+		_courseCup2014Obstacles01 = GameObject.Find ("CourseCup2014Obstacles01");
+		_courseStraight50Metres = GameObject.Find ("CoruseStraight50Metres");		
+		_currentCourse = COURSES.COURSE_LABOR;
+		_courseCup2014.SetActive(false);
+		_courseCup2014Parking01.SetActive(false);
+		_courseCup2014Obstacles01.SetActive(false);
+		_courseStraight50Metres.SetActive(false);
+
 
 		_tempCar = new GameObject ();
 		_car = GameObject.Find("Car");
@@ -189,8 +212,42 @@ public class ISFSimulationController : MonoBehaviour {
 			}
 			else if(_currentCamera == CAMERAS.CAMERA_TOP){
 				_cameraTop.enabled = false;
+				_cameraView01.enabled = true;
+				_currentCamera = CAMERAS.CAMERA_VIEW1;
+			}
+			else if(_currentCamera == CAMERAS.CAMERA_VIEW1){
+				_cameraView01.enabled = false;
 				_cameraBack.enabled = true;
 				_currentCamera = CAMERAS.CAMERA_BACK;
+			}
+		});
+
+		btnChangeCourse.onClick.AddListener(() => {
+			//handle click here
+			if(_currentCourse == COURSES.COURSE_LABOR){
+				_courseLabor.SetActive(false);
+				_courseCup2014.SetActive(true);
+				_currentCourse = COURSES.COURSE_CUP2014;
+			}
+			else if(_currentCourse == COURSES.COURSE_CUP2014){
+				_courseCup2014.SetActive(false);
+				_courseCup2014Parking01.SetActive(true);
+				_currentCourse = COURSES.COURSE_CUP2014_PARKING01;
+			}
+			else if(_currentCourse == COURSES.COURSE_CUP2014_PARKING01){
+				_courseCup2014Parking01.SetActive(false);
+				_courseCup2014Obstacles01.SetActive(true);
+				_currentCourse = COURSES.COURSE_CUP2014_OBSTACLES01;
+			}
+			else if(_currentCourse == COURSES.COURSE_CUP2014_OBSTACLES01){
+				_courseCup2014Obstacles01.SetActive(false);
+				_courseStraight50Metres.SetActive(true);
+				_currentCourse = COURSES.CORUSE_STRAIGHT_50_METRES;
+			}
+			else if(_currentCourse == COURSES.CORUSE_STRAIGHT_50_METRES){
+				_courseStraight50Metres.SetActive(false);
+				_courseLabor.SetActive(true);
+				_currentCourse = COURSES.COURSE_LABOR;
 			}
 		});
 	
