@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace TcpServerClient
 {
@@ -31,7 +32,7 @@ namespace TcpServerClient
             }
             catch (Exception ex)
             {
-                //Debug.log(ex.Message);
+				Debug.WriteLine(ex.Message);
             }
         }
 
@@ -45,8 +46,8 @@ namespace TcpServerClient
                 initConnection();
             }
             catch (Exception ex)
-            {
-                //Debug.log(ex.Message);
+			{
+				Debug.WriteLine(ex.Message);
             }
         }
 
@@ -155,7 +156,8 @@ namespace TcpServerClient
                 }
             }
             catch (Exception ex)
-            {
+			{
+				Debug.WriteLine(ex.Message);
                 return false;
             }
             return true;

@@ -13,6 +13,7 @@ public struct DATA_SET_MONITOR_t{
 
 public class ISFController : MonoBehaviour {
 
+	/*
 	static int counter = 0;
 	Timer _timer;
 	Client _client;
@@ -37,12 +38,7 @@ public class ISFController : MonoBehaviour {
 		QualitySettings.vSyncCount = 0;
 	}
 
-	/*
-	void Awake ()
-	{
-		Application.targetFrameRate = 50;
-	}
-	*/
+
 	// Use this for initialization
 	void Start () {
 		//StartCoroutine(changeFramerate());
@@ -90,26 +86,7 @@ public class ISFController : MonoBehaviour {
 		//_client.sendData ("huhu Server");		
 		//if (_CarWheelFrontLeft != null) {
 		//}
-
-		/*
-		long lastTicks = DateTime.Now.Ticks;
-		long currentTicks = lastTicks;
-		float delay = 1f / desiredFPS;
-		float elapsedTime;
 		
-		if (desiredFPS <= 0)
-			return;
-		
-		while (true)
-		{
-			currentTicks = DateTime.Now.Ticks;
-			elapsedTime = (float)TimeSpan.FromTicks(currentTicks - lastTicks).TotalSeconds;
-			if(elapsedTime >= delay)
-			{
-				break;
-			}
-		}
-		*/
 		if (Input.GetKey ("up")) {
 			speed *= 1.5f;
 		} else if (Input.GetKey ("down")) {
@@ -156,40 +133,6 @@ public class ISFController : MonoBehaviour {
 		//int i = 0;
 	}
 
-	/*
-	float calcSpeed(int pwm){
-		return 1;
-
-		bool vorwaerts = true;
-		if (pwm >= 1450 && pwm <= 1550)
-			return 0;
-		else if (pwm < 1100 || pwm > 1900)
-			return 0;
-		else if (pwm > 1500) {
-			vorwaerts = true;
-		} else {
-			vorwaerts = false;
-			pwm = 1500+(1500 -pwm);
-		}
-
-		double uebersetzungWelleMotor = 7;
-		double umfangReifenMeter = Math.PI * 65 / 1000;
-
-		//Berechnung PWM in Umdrehung/s
-		double period1 = 1.11102 * Math.Pow (10, 23);
-		double period2 = Math.Exp (-31.0161 * (pwm / 1000.0));
-		double motorPeriode = period1 * period2;
-		double umdrehungenMotorSek = 1000 / motorPeriode;
-		double umdrehungWelle = umdrehungenMotorSek / uebersetzungWelleMotor;
-
-
-		if (vorwaerts == false)
-			return Convert.ToSingle(umdrehungWelle * umfangReifenMeter)*-1;
-		else
-			return Convert.ToSingle(umdrehungWelle * umfangReifenMeter);
-		//Berechnung Umdrehung in m/s mit Radumfang
-	}
-	*/
 
 	Vector3 calcNewCarPos(Vector3 oldPos, int speed_mmSek, float lenkwinkel){
 		Vector3 newPos;
@@ -202,4 +145,5 @@ public class ISFController : MonoBehaviour {
 
 		return newPos;
 	}
+	*/
 }

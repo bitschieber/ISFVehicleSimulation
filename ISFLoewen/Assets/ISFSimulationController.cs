@@ -10,7 +10,7 @@ using UnityEngine.UI;
 public enum SIMULATION_COMMAND{SIMUCOM_UNKNOWN, SIMUCOM_SEND_IMAGE,SIMUCOM_UPDATE_DATA};
 public enum CAMERAS{CAMERA_FRONT, CAMERA_TOP, CAMERA_BACK, CAMERA_VIEW1};
 public enum COURSES{COURSE_LABOR, COURSE_CUP2014, COURSE_CUP2014_PARKING01, COURSE_CUP2014_OBSTACLES01, CORUSE_STRAIGHT_50_METRES};
-public enum GPIO_PINS{LED_INDICATOR_LFET, LED_INDICATOR_RIGHT, LED_BACKWARD, LED_DRIVING_LIGHT, LED_BRAKE_LIGHT};
+public enum GPIO_PIN{GPIO_PIN01 = 0,GPIO_PIN02 = 1,GPIO_PIN03 = 2,GPIO_PIN04 = 3,GPIO_PIN05 = 4,GPIO_PIN06 = 5,GPIO_PIN07 = 6,GPIO_PIN08 = 7};
 
 
 public struct DATA_SET_TO_SIMULATION_t{
@@ -61,7 +61,7 @@ public class ISFSimulationController : MonoBehaviour {
 	//private Quaternion _tempCarRotation;
 	private CameraStream _cameraStream;
 	private bool newScreen = false;
-	private bool init = true;
+	//private bool init = true;
 	private bool moveCar = false;
 	private float _moveCarMmDistance = 0;
 	private float _moveCarAngle = 0;
@@ -77,7 +77,7 @@ public class ISFSimulationController : MonoBehaviour {
 	private GameObject _cubeAxisFront;
 	private GameObject _cubeAxisBack;
 	private GameObject _steeringCutPoint;
-	private GameObject _golf;
+	//private GameObject _golf;
 	private GameObject _carRoot;
 	private GameObject _posStraighForeward;
 	//Lights
@@ -90,9 +90,9 @@ public class ISFSimulationController : MonoBehaviour {
 
 	//private int _moveCarMsTime = 0;
 
-	private float _moveTempDistance = 2;
-	private long _oldTimeTicks = DateTime.Now.Ticks;
-	private long _oldTimeTicksOszi = DateTime.Now.Ticks;
+	//private float _moveTempDistance = 2;
+	//private long _oldTimeTicks = DateTime.Now.Ticks;
+//	private long _oldTimeTicksOszi = DateTime.Now.Ticks;
 
 	private byte[] _cameraImage;
 
@@ -106,8 +106,8 @@ public class ISFSimulationController : MonoBehaviour {
 	private Vector3 end2;
 	private Vector3 _steeringCutPointPos = new Vector3();
 	private TimeSpan elapsedSpan;
-	private bool left = false;
-	private bool firstTurn =true;
+	//private bool left = false;
+	//private bool firstTurn =true;
 	//private Quaternion _wheelRotation = new Quaternion(;
 	private GameObject currentRotationWheel;
 	private float _cutPointLineDirection = -100.0f;
@@ -152,7 +152,7 @@ public class ISFSimulationController : MonoBehaviour {
 		_cubeAxisBack = GameObject.Find ("CubeAxisBack");
 		_steeringCutPoint = GameObject.Find("SteeringCutPoint");
 		_carRoot = GameObject.Find ("CarRoot");
-		_golf = GameObject.Find ("Golf");
+		//_golf = GameObject.Find ("Golf");
 		_posStraighForeward = GameObject.Find ("PosStraighForeward");
 
 		//Lights
@@ -250,9 +250,6 @@ public class ISFSimulationController : MonoBehaviour {
 				_currentCourse = COURSES.COURSE_LABOR;
 			}
 		});
-	
-
-
 	}
 
 
@@ -331,7 +328,7 @@ public class ISFSimulationController : MonoBehaviour {
 				_carRoot.transform.Translate(0,0,_moveCarMmDistance);
 			}
 			else{
-				float distance = 0;
+				//float distance = 0;
 				float angle = calcRotateFromSpeed(_moveCarMmDistance,mag);
 				if(wheelAngle>=180)
 					angle = angle*(-1);
@@ -379,7 +376,7 @@ public class ISFSimulationController : MonoBehaviour {
 	float calcRotateFromSpeed(float speed_mms,float rad)
 	{
 		float angle = 0;
-		speed_mms = speed_mms;
+		//speed_mms = speed_mms;
 
 		angle = (57.29f / rad)*speed_mms;
 
@@ -460,27 +457,27 @@ public class ISFSimulationController : MonoBehaviour {
 	}
 
 	private void setCarLights(uint ledStates){
-		if( (ledStates & (1 << (int)GPIO_PINS.LED_INDICATOR_LFET)) >0)
+		if( (ledStates & (1 << (int)GPIO_PIN.GPIO_PIN01)) >0)
 			_lightIndicatorLeft.SetActive (true);
 		else
 			_lightIndicatorLeft.SetActive (false);
 
-		if( (ledStates & (1 << (int)GPIO_PINS.LED_INDICATOR_RIGHT)) >0)
+		if( (ledStates & (1 << (int)GPIO_PIN.GPIO_PIN02)) >0)
 			_lightIndicatorRight.SetActive (true);
 		else
 			_lightIndicatorRight.SetActive (false);
 
-		if((ledStates & (1 << (int)GPIO_PINS.LED_DRIVING_LIGHT))>0)
+		if((ledStates & (1 << (int)GPIO_PIN.GPIO_PIN03))>0)
 			_lightDrive.SetActive (true);
 		else
 			_lightDrive.SetActive (false);
 
-		if((ledStates & (1 << (int)GPIO_PINS.LED_BRAKE_LIGHT)) >0)
+		if((ledStates & (1 << (int)GPIO_PIN.GPIO_PIN04)) >0)
 			_lightBreak.SetActive (true);
 		else
 			_lightBreak.SetActive (false);
 
-		if((ledStates & (1 << (int)GPIO_PINS.LED_BACKWARD)) >0)
+		if((ledStates & (1 << (int)GPIO_PIN.GPIO_PIN05)) >0)
 			_lightBackward.SetActive (true);
 		else
 			_lightBackward.SetActive (false);
@@ -488,31 +485,15 @@ public class ISFSimulationController : MonoBehaviour {
 
 	private void moveCarFunc(int speed, int steeringAngle, uint timediff)
 	{
-		/*
-
-		_moveCarMmDistance = (float)((s / 1000) * timediff);
-		_moveCarAngle = (float)steeringAngle;
-		*/
-		//_moveCarMsTime = timediff;
 		float mmInUnity = 0;
 		mmInUnity = ((float)(speed / 1000.0f)) / 10;
 		_moveCarMmDistance = mmInUnity * timediff;
-		//_moveCarMmDistance = _moveCarMmDistance / 10;
 		_moveCarAngle = (float)steeringAngle;
 
 		moveCar = true;
 
 		while (moveCar==true) {
 		}
-
-		//_tempCar.transform.Rotate (0, steeringAngle, 0);
-		//_tempCar.transform.Translate (0, 0, (float)((s / 1000) * timediff));
-
-
-		//_tempCarPosition.z += (float)((s/1000)*timediff);
-		//_tempCarRotation.y += steeringAngle;
-
-		//transform.Rotate(Vector3.up, -turnSpeed * Time.deltaTime);
 	}
 
 	DATA_SET_TO_SIMULATION_t ByteArrayToNewStuff(byte[] bytes)

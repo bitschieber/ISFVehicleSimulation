@@ -4,8 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-//using System.Threading;
-//using System.Threading.Tasks;
 
 namespace TcpServerClient
 {
@@ -84,6 +82,7 @@ namespace TcpServerClient
 			}
 			catch(Exception ex)
 			{
+				Console.WriteLine(ex.Message);
 			}
 		}
 
@@ -194,7 +193,8 @@ namespace TcpServerClient
                 }
             }
             catch (Exception ex)
-            {
+			{
+				Console.WriteLine(ex.Message);
                 return false;
             }
             return true;
@@ -213,7 +213,8 @@ namespace TcpServerClient
                 }
             }
             catch (Exception ex)
-            {
+			{
+				Console.WriteLine(ex.Message);
                 return false;
             }
             return true;

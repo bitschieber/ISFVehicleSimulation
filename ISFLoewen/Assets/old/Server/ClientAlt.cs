@@ -13,6 +13,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System.Threading;
 using System.Text;
+using System.Diagnostics;
 
 
 namespace AssemblyCSharp
@@ -26,7 +27,7 @@ namespace AssemblyCSharp
 
 	public class ClientAlt
 	{
-		int BufferSize = 2048;
+		//int BufferSize = 2048;
 		TcpClient _tcpClient;
 
 
@@ -38,6 +39,7 @@ namespace AssemblyCSharp
 				//client.GetStream().BeginRead(readBuffer, 0, READ_BUFFER_SIZE, new AsyncCallback(DoRead), null);
 			}
 			catch(Exception ex){
+				Debug.WriteLine(ex.Message);
 			}
 		}
 		/*

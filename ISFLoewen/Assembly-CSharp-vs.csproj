@@ -47,12 +47,12 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\CameraStream.cs" />
-     <Compile Include="Assets\Client.cs" />
      <Compile Include="Assets\ISFSimulationController.cs" />
      <Compile Include="Assets\Server.cs" />
      <Compile Include="Assets\old\CarController.cs" />
      <Compile Include="Assets\old\CarTransformation.cs" />
      <Compile Include="Assets\old\CarUserControl.cs" />
+     <Compile Include="Assets\old\Client.cs" />
      <Compile Include="Assets\old\FPSScreen.cs" />
      <Compile Include="Assets\old\ISFController.cs" />
      <Compile Include="Assets\old\Server\Client.cs" />
