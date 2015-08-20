@@ -7,12 +7,21 @@ using System;
 using System.Runtime.InteropServices;
 using UnityEngine.UI;
 
-public enum SIMULATION_COMMAND{SIMUCOM_UNKNOWN, SIMUCOM_SEND_IMAGE,SIMUCOM_UPDATE_DATA};
+
+//Enum für zum ändern der Sicht
 public enum CAMERAS{CAMERA_FRONT, CAMERA_TOP, CAMERA_BACK, CAMERA_VIEW1};
+//Enums für zum ändern der Strecke
 public enum COURSES{COURSE_LABOR, COURSE_CUP2014, COURSE_CUP2014_PARKING01, COURSE_CUP2014_OBSTACLES01, CORUSE_STRAIGHT_50_METRES};
+
+
+public enum SIMULATION_COMMAND{SIMUCOM_UNKNOWN, SIMUCOM_SEND_IMAGE,SIMUCOM_UPDATE_DATA};
 public enum GPIO_PIN{GPIO_PIN01 = 0,GPIO_PIN02 = 1,GPIO_PIN03 = 2,GPIO_PIN04 = 3,GPIO_PIN05 = 4,GPIO_PIN06 = 5,GPIO_PIN07 = 6,GPIO_PIN08 = 7};
 
 
+
+/*
+ * Datenstrukturen für den Datenaustausch mit ISFCarDesktop
+ */
 public struct DATA_SET_TO_SIMULATION_t{
 	UInt32 start_sequence;
 	public SIMULATION_COMMAND command;
@@ -32,6 +41,10 @@ public struct DATA_HEADER_SET{
 	UInt32 end_sequence;
 };
 
+
+
+
+
 public class ISFSimulationController : MonoBehaviour {
 
 	public InputField ipAddressField;
@@ -40,12 +53,14 @@ public class ISFSimulationController : MonoBehaviour {
 	public Button btnChangeCamera;
 	public Button btnChangeCourse;
 
+	//Objekte hinter denen jeweils die Kameras hinterlegt sind
 	private CAMERAS _currentCamera = CAMERAS.CAMERA_BACK;
 	private Camera _cameraBack;
 	private Camera _cameraFront;
 	private Camera _cameraTop;
 	private Camera _cameraView01;
 
+	//Objekte hinter denen jeweils die Strecken hinterlegt sind
 	private COURSES _currentCourse = COURSES.COURSE_LABOR;
 	private GameObject _courseLabor;
 	private GameObject _courseCup2014;
@@ -57,11 +72,8 @@ public class ISFSimulationController : MonoBehaviour {
 	private GameObject _goCamera;
 	private GameObject _car;
 	private GameObject _tempCar;
-	//private Vector3 _tempCarPosition;
-	//private Quaternion _tempCarRotation;
 	private CameraStream _cameraStream;
 	private bool newScreen = false;
-	//private bool init = true;
 	private bool moveCar = false;
 	private float _moveCarMmDistance = 0;
 	private float _moveCarAngle = 0;
@@ -88,27 +100,15 @@ public class ISFSimulationController : MonoBehaviour {
 	private GameObject _lightBreak;
 	private GameObject _lightBackward;
 
-	//private int _moveCarMsTime = 0;
 
-	//private float _moveTempDistance = 2;
-	//private long _oldTimeTicks = DateTime.Now.Ticks;
-//	private long _oldTimeTicksOszi = DateTime.Now.Ticks;
-
-	private byte[] _cameraImage;
-
-	
-	
+	private byte[] _cameraImage;	
 	LineRenderer lineRenderer;
-
 	
 	// Update is called once per frame
 	private Vector3 end;
 	private Vector3 end2;
 	private Vector3 _steeringCutPointPos = new Vector3();
 	private TimeSpan elapsedSpan;
-	//private bool left = false;
-	//private bool firstTurn =true;
-	//private Quaternion _wheelRotation = new Quaternion(;
 	private GameObject currentRotationWheel;
 	private float _cutPointLineDirection = -100.0f;
 
@@ -180,12 +180,11 @@ public class ISFSimulationController : MonoBehaviour {
 			else{
 				IPAddress ipaddr = IPAddress.Parse(ipAddressField.text);
 				_server = new Server (ipaddr, 4545, 1, dataFromServer);
-				//btnStartServer.enabled = false;
-				//ipAddressField.enabled = false;
 				btnStartServer.GetComponentInChildren<Text>().text = "Close Server";
 			}
 		});
-		
+
+		//Setzt das Fahrzeug zurück auf Position 0,0,0
 		btnReset.onClick.AddListener(() => {
 			//handle click here
 			_carRoot.transform.position = new Vector3(0,_carRoot.transform.position.y,0);
@@ -197,7 +196,7 @@ public class ISFSimulationController : MonoBehaviour {
 		_cameraFront.enabled = false;
 		_cameraBack.enabled = false;
 
-
+		//Button für die Auswahl der anzuzeigenen Sicht
 		btnChangeCamera.onClick.AddListener(() => {
 			//handle click here
 			if(_currentCamera == CAMERAS.CAMERA_BACK){
@@ -222,6 +221,7 @@ public class ISFSimulationController : MonoBehaviour {
 			}
 		});
 
+		//Button für die Auswahl der anzuzeigenen Strecke
 		btnChangeCourse.onClick.AddListener(() => {
 			//handle click here
 			if(_currentCourse == COURSES.COURSE_LABOR){
@@ -299,16 +299,11 @@ public class ISFSimulationController : MonoBehaviour {
 		_tireFrontLeft.transform.Rotate (new Vector3(0,1,0),_wheelFrontLeft.transform.localEulerAngles.y) ;
 		_tireFrontRight.transform.Rotate (new Vector3(0,1,0),-_tireFrontRight.transform.localEulerAngles.y) ;
 		_tireFrontRight.transform.Rotate (new Vector3(0,1,0),_wheelFrontRight.transform.localEulerAngles.y) ;
-		
-		if (newScreen == true) {
-			_cameraImage = _cameraStream.getImage();
-		}		
-		newScreen = false;
+
 
 		/*
 		 * Only when Step from SimulationController
 		 * */
-
 		if (moveCar == true) {
 
 			float oldAngle = _wheelFrontLeft.transform.localEulerAngles.y;
@@ -316,121 +311,71 @@ public class ISFSimulationController : MonoBehaviour {
 				oldAngle = oldAngle - 360;
 			}			
 
-			
+			//Lichter anhand der GPIOs schalten
 			setCarLights(_moveCarLights);
-			
+
+			//Vorderräder auf gewünschten Lenkwinkel setzen
+			//Erst auf 0 Grad setzen und dann auf gewünschten Lenkwinkel
 			_wheelFrontLeft.transform.Rotate(new Vector3(0,1,0), (oldAngle * (-1) ));
 			_wheelFrontLeft.transform.Rotate(new Vector3(0,1,0), _moveCarAngle);
 			_wheelFrontRight.transform.Rotate(new Vector3(0,1,0), (oldAngle * (-1) ));
 			_wheelFrontRight.transform.Rotate(new Vector3(0,1,0), _moveCarAngle);
 
-			if (wheelAngle == 0) { //StraightForward
+
+			if (wheelAngle == 0) { //Wenn das Fahrzeug nur geradeaus fahren soll
 				_carRoot.transform.Translate(0,0,_moveCarMmDistance);
 			}
-			else{
-				//float distance = 0;
+			else{//Falls eine Rotation durchgeführt werden muss
 				float angle = calcRotateFromSpeed(_moveCarMmDistance,mag);
 				if(wheelAngle>=180)
 					angle = angle*(-1);
 
 				Debug.Log("Rad:"+mag.ToString());
+				//Das gesamte Auto um den berechneten Schnittpunkt drehen.
 				_carRoot.transform.RotateAround(_steeringCutPoint.transform.position,new Vector3(0,1,0),angle);
 			}
 
 			moveCar = false;
 		}
+
+		
+		if (newScreen == true) {
+			_cameraImage = _cameraStream.getImage();
+		}		
+		newScreen = false;
 	}
 
-
-	void drawCircle(Vector3 center, double radius)
-	{
-		double r = radius;
-
-		float theta_scale = 0.01f;             //Set lower to add more points
-		int size = (int)((2.0f * Math.PI) / theta_scale); //Total number of points in circle.		
-		lineRenderer.SetVertexCount(size);
-
-		//lineRenderer.material = new Material(Shader.Find("Particles/Additive"));
-		int i = 0;
-		for(float theta = 0; theta < 2 * Math.PI; theta += 0.1f) {
-			double x = r*Math.Cos(theta);
-			double y = r*Math.Sin(theta);
-			
-			Vector3 pos = new Vector3((float)x, 0,(float)y);
-			pos += center;
-
-			if(i>=size)
-				break;
-			lineRenderer.SetPosition(i, pos);
-			i+=1;
-		}
-	}
-
-	void drawLine(Vector3 start, double len)
-	{
-		lineRenderer.SetVertexCount(2);
-		lineRenderer.SetPosition(0, start);
-		lineRenderer.SetPosition(1, _posStraighForeward.transform.position);
-	}
-
+	//Berechnung des Winkels um das sich das Fahrzeug dreht, unter Berücksichtigung der zurückgelegten Strecke auf dem Kreisbogen.
 	float calcRotateFromSpeed(float speed_mms,float rad)
 	{
-		float angle = 0;
-		//speed_mms = speed_mms;
-
-		angle = (57.29f / rad)*speed_mms;
-
-		return angle;
+		return ( (180.0f/(float)Math.PI) / rad)*speed_mms;
 	}
-
 
 	void dataFromServer(byte[] data, int len)
 	{
 		DATA_SET_TO_SIMULATION_t _dataFromsimulationController = ByteArrayToNewStuff (data);
+		bool sendImage = false;
 
-		/*
-		System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding ();
-		string message = enc.GetString (data,0,len);
-		*/
+		//Prüfen, um welchen Befehl es sich handelt
 		if (_dataFromsimulationController.command == SIMULATION_COMMAND.SIMUCOM_SEND_IMAGE) {
-
-			newScreen = true;
-
-			while(newScreen==true){
-			}
-
-			DATA_HEADER_SET header = new DATA_HEADER_SET();
-			header.type = DATA_HEADER_TYPE.IMAGE_JPEG;
-			header.length = (UInt32)_cameraImage.Length;
-
-			int hSize = Marshal.SizeOf(header);
-
-			byte[] sendData = new byte[hSize+ header.length];
-			Array.Copy(getBytes(header),sendData,hSize);
-			Array.Copy(_cameraImage,0,sendData,hSize,header.length);
-
-			//byte[] senddata = enc.GetBytes("HALLO From SIMU");
-			if(_server.getClients().Count>0)
-			{
-				TcpClient c = _server.getClients()[0];
-				//_server.sendData(c,_cameraImage);
-				//foreach (TcpClient c in _server.getClients()) {
-
-				if(!_server.sendData(c,sendData))
-				{
-					_server.removeClient(c);
-				}
-
-			}
+			
+			sendImage = true;
 		}
 		else if (_dataFromsimulationController.command == SIMULATION_COMMAND.SIMUCOM_UPDATE_DATA) {
 
 			moveCarFunc(_dataFromsimulationController.speed_mms, _dataFromsimulationController.steering_angle, _dataFromsimulationController.timediff);
 			_moveCarLights = _dataFromsimulationController.gpio_state;
+
+			sendImage = true;
+
+		}
+
+		//Send Image to Client
+		if (sendImage == true) {
 			newScreen = true;
 			while(newScreen==true){
 			}
-
+			
 			DATA_HEADER_SET header = new DATA_HEADER_SET();
 			header.type = DATA_HEADER_TYPE.IMAGE_JPEG;
 			header.length = (UInt32)_cameraImage.Length;
@@ -440,12 +385,9 @@ public class ISFSimulationController : MonoBehaviour {
 			byte[] sendData = new byte[hSize+ header.length];
 			Array.Copy(getBytes(header),sendData,hSize);
 			Array.Copy(_cameraImage,0,sendData,hSize,header.length);
-			//byte[] senddata = enc.GetBytes("HALLO From SIMU");
 			if(_server.getClients().Count>0)
 			{
 				TcpClient c = _server.getClients()[0];
-				//_server.sendData(c,_cameraImage);
-				//foreach (TcpClient c in _server.getClients()) {
 				
 				if(!_server.sendData(c,sendData))
 				{
@@ -454,35 +396,39 @@ public class ISFSimulationController : MonoBehaviour {
 				
 			}
 		}
+
 	}
 
-	private void setCarLights(uint ledStates){
-		if( (ledStates & (1 << (int)GPIO_PIN.GPIO_PIN01)) >0)
+	//Je nach GPIO-Zustand werden hier die entsprechenden Lichter an- und ausgeschaltet
+	private void setCarLights(uint gpioStates){
+		if( (gpioStates & (1 << (int)GPIO_PIN.GPIO_PIN01)) >0)
 			_lightIndicatorLeft.SetActive (true);
 		else
 			_lightIndicatorLeft.SetActive (false);
 
-		if( (ledStates & (1 << (int)GPIO_PIN.GPIO_PIN02)) >0)
+		if( (gpioStates & (1 << (int)GPIO_PIN.GPIO_PIN02)) >0)
 			_lightIndicatorRight.SetActive (true);
 		else
 			_lightIndicatorRight.SetActive (false);
 
-		if((ledStates & (1 << (int)GPIO_PIN.GPIO_PIN03))>0)
+		if((gpioStates & (1 << (int)GPIO_PIN.GPIO_PIN03))>0)
 			_lightDrive.SetActive (true);
 		else
 			_lightDrive.SetActive (false);
 
-		if((ledStates & (1 << (int)GPIO_PIN.GPIO_PIN04)) >0)
+		if((gpioStates & (1 << (int)GPIO_PIN.GPIO_PIN04)) >0)
 			_lightBreak.SetActive (true);
 		else
 			_lightBreak.SetActive (false);
 
-		if((ledStates & (1 << (int)GPIO_PIN.GPIO_PIN05)) >0)
+		if((gpioStates & (1 << (int)GPIO_PIN.GPIO_PIN05)) >0)
 			_lightBackward.SetActive (true);
 		else
 			_lightBackward.SetActive (false);
 	}
 
+	//Parameter für geschwindigkeit und Lenkwinkel setzen und warten bis neu gerendert wird -> Update()
+	//Innerhalb der Update() Methode wird auf diese Parameter zugeriffen und das Fahrzeug positioniert
 	private void moveCarFunc(int speed, int steeringAngle, uint timediff)
 	{
 		float mmInUnity = 0;
@@ -491,7 +437,6 @@ public class ISFSimulationController : MonoBehaviour {
 		_moveCarAngle = (float)steeringAngle;
 
 		moveCar = true;
-
 		while (moveCar==true) {
 		}
 	}
@@ -514,36 +459,6 @@ public class ISFSimulationController : MonoBehaviour {
 		Marshal.Copy(ptr, arr, 0, size);
 		Marshal.FreeHGlobal(ptr);
 		return arr;
-	}
-
-	public static bool LineLineIntersection(out Vector3 intersection, Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2){
-		
-		intersection = Vector3.zero;
-		
-		Vector3 lineVec3 = linePoint2 - linePoint1;
-		Vector3 crossVec1and2 = Vector3.Cross(lineVec1, lineVec2);
-		Vector3 crossVec3and2 = Vector3.Cross(lineVec3, lineVec2);
-		
-		float planarFactor = Vector3.Dot(lineVec3, crossVec1and2);
-		
-		//Lines are not coplanar. Take into account rounding errors.
-		if((planarFactor >= 0.00001f) || (planarFactor <= -0.00001f)){
-			
-			return false;
-		}
-		
-		//Note: sqrMagnitude does x*x+y*y+z*z on the input vector.
-		float s = Vector3.Dot(crossVec3and2, crossVec1and2) / crossVec1and2.sqrMagnitude;
-		
-		if((s >= 0.0f) && (s <= 1.0f)){
-			
-			intersection = linePoint1 + (lineVec1 * s);
-			return true;
-		}
-		
-		else{
-			return false;       
-		}
 	}
 
 	//Two non-parallel lines which may or may not touch each other have a point on each line which are closest
